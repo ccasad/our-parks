@@ -25,7 +25,7 @@ A family app for browsing US National Park Service sites and keeping a shared lo
 - [x] Family members list (for "who went") (FR-18)
 - [x] Log, edit and delete visits; family rating; visited badge (FR-14 to FR-16)
 - [x] Visits tab (history, newest first) (FR-17)
-- [ ] Map view (MapLibre GL, OpenFreeMap tiles) with the floating List/Map toggle (FR-8 to FR-10)
+- [x] Map view (MapLibre GL, OpenFreeMap tiles) with the floating List/Map toggle (FR-8 to FR-10)
 - [ ] "Near me" filter using the browser's current location (FR-7, FR-11)
 - [ ] More tab: invite, refresh park data, settings (FR-19)
 - [ ] The app's own icon: a white pine tree

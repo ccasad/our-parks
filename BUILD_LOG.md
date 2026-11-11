@@ -8,9 +8,9 @@
 - Family members list (FR-18) — Add the family members list in More
 - Log, edit and delete visits; family rating; visited badge (FR-14 to FR-16) — Log, edit and delete visits and list them on the Visits tab
 - Visits tab (FR-17) — same commit as above
+- Map view with the floating List/Map toggle (FR-8 to FR-10) — Add the map view and the floating List/Map toggle
 
 ## Next
-- Map view with the floating List/Map toggle (FR-8 to FR-10)
 - "Near me" filter (FR-7, FR-11)
 - More tab: invite, refresh park data, settings (FR-19)
 
@@ -27,6 +27,8 @@
 
 - Visits: delete uses a confirmation page (works without JavaScript). The date defaults to the server's date, replaced with the viewer's local date by `app.js`. Dates up to one day ahead are accepted (time zones). Audit events `visit_created`, `visit_updated`, `visit_deleted` carry IDs and the park code only.
 - The family is one shared group, so "scoped to the signed-in user's family" means any signed-in member; unknown IDs return 404.
+
+- Map: markers are DOM buttons (keyboard and screen-reader friendly); the card is built with `textContent`. The map frames the lower 48 when any parks are there (Alaska, Hawaii and territories would otherwise zoom out to the world). The OpenFreeMap credit is also written under the map, in addition to MapLibre's own attribution control. The map code and library load only when a map is on the page. Not checked in a real browser here (no browser in this environment): tests cover the data and markup only.
 
 ## Needs a human
 - Register a free NPS API key (nps.gov/subjects/developer) and set it as `NPS_API_KEY` in Vercel.

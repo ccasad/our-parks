@@ -42,3 +42,26 @@
     padding-bottom: 2rem;
   }
 }
+
+/* Floating controls sit above the phone tab bar (3.5rem plus the home indicator). */
+@utility safe-bottom-float {
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  @media (width >= 48rem) { bottom: 1.5rem; }
+}
+
+/* Map markers and the card opened from one. Plain CSS: they are built by parks_map.js. */
+.park-marker {
+  width: 28px; height: 28px; border-radius: 9999px; border: 3px solid #fff; cursor: pointer;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.5); padding: 0;
+}
+.park-marker.is-visited { background: #059669; }
+.park-marker.is-unvisited { background: #64748b; }
+.park-marker.is-me { background: #2563eb; width: 20px; height: 20px; cursor: default; }
+.maplibregl-popup .maplibregl-popup-content { padding: 0; border-radius: 12px; overflow: hidden; color: #0f172a; }
+.park-card-photo { display: block; width: 100%; height: 120px; object-fit: cover; background: #e2e8f0; }
+.park-card-body { padding: 10px 12px 12px; }
+.park-card-name { font-weight: 600; margin: 0; }
+.park-card-states, .park-card-meta { font-size: 0.875rem; color: #475569; margin: 2px 0 0; }
+.park-card-badge { background: #d1fae5; color: #065f46; border-radius: 9999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 600; margin-right: 8px; }
+.park-card-stars { color: #d97706; letter-spacing: 1px; }
+.park-card-link { display: inline-block; margin-top: 8px; padding: 10px 0; min-height: 44px; font-weight: 600; color: #0369a1; text-decoration: underline; }

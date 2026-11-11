@@ -1,0 +1,6 @@
+{#- Map view: the progress line and the points, swapped alone while filtering; parks_map.js redraws the markers. -#}
+<p class="mb-3 text-sm font-medium text-slate-600 dark:text-slate-300" data-progress>
+  {{ result.visited_count }} of {{ result.type_total }} {{ result.progress_label }} visited
+  <span class="font-normal text-slate-500 dark:text-slate-400">· {{ points | length }} on the map</span>
+</p>
+<script type="application/json" id="map-data">{{ {"points": points} | tojson }}</script>

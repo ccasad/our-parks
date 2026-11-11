@@ -7,8 +7,9 @@ from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
 from app import audit, refresh
+from app.config import get_settings
 from app.models import User
-from app.park_list import Filters, activities, designations, find_parks, states
+from app.park_list import Filters, activities, designations, find_parks, map_points, states
 from app.sessions import DbSession, SignedInUser, same_origin
 from app.visits import get_park, latest_rating, park_visits
 from app.web import NO_STORE, render, templates
@@ -37,17 +38,19 @@ def parks_page(
     state: Annotated[str | None, Query(max_length=2)] = None,
     activity: Annotated[str | None, Query(max_length=100)] = None,
     f: Annotated[str | None, Query(max_length=1)] = None,
+    view: Annotated[str | None, Query(max_length=4)] = None,
 ) -> HTMLResponse:
     filters = Filters.from_query(
         q=q, visited=visited, types=types, state=state, activity=activity, submitted=bool(f)
     )
     result = find_parks(db, filters)
-    # Typing in the search box swaps only the list, not the whole page.
+    view = "map" if view == "map" else "list"
+    # Typing in the search box swaps only the list (or the map's data), not the whole page.
     if request.headers.get("hx-target") == "results":
         return templates.TemplateResponse(
             request,
-            "partials/park_list.html",
-            {"filters": filters, "result": result},
+            "partials/park_map_data.html" if view == "map" else "partials/park_list.html",
+            {"filters": filters, "result": result, "points": map_points(result)},
             headers=NO_STORE,
         )
     context = status_context(db, user)
@@ -60,6 +63,9 @@ def parks_page(
         active="parks",
         filters=filters,
         result=result,
+        view=view,
+        points=map_points(result),
+        map_style_url=get_settings().map_style_url,
         all_types=designations(db),
         all_states=states(db),
         all_activities=activities(db),

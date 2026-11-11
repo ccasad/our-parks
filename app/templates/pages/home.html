@@ -8,6 +8,7 @@
       hx-get="/" hx-target="#results" hx-swap="innerHTML" hx-push-url="true" hx-sync="this:replace"
       hx-trigger="input changed delay:250ms from:#q, change">
   <input type="hidden" name="f" value="1">
+  {% if view == "map" %}<input type="hidden" name="view" value="map">{% endif %}
   <div class="flex gap-2">
     <label for="q" class="sr-only">Search parks by name</label>
     <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="Search parks" autocomplete="off" enterkeyhint="search"
@@ -64,9 +65,35 @@
   </details>
 </form>
 
+{% if view == "map" %}
 <div id="results" class="mt-4">
+  {% include "partials/park_map_data.html" %}
+</div>
+<p class="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
+  <span class="inline-flex items-center gap-1.5"><span class="size-3 rounded-full bg-emerald-600" aria-hidden="true"></span>Visited</span>
+  <span class="inline-flex items-center gap-1.5"><span class="size-3 rounded-full bg-slate-500" aria-hidden="true"></span>Not visited</span>
+</p>
+<div id="map" data-style="{{ map_style_url }}" role="region" aria-label="Map of parks"
+     class="mb-2 h-[60dvh] min-h-[320px] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-200 md:h-[70dvh] dark:border-slate-800 dark:bg-slate-800"></div>
+<p id="map-error" role="alert" hidden class="mb-2 text-sm text-amber-700 dark:text-amber-400">The map couldn't load. The list view still works.</p>
+<p class="mb-24 text-xs text-slate-500 md:mb-20 dark:text-slate-400">Map: <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer" class="underline">OpenFreeMap</a>, © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener noreferrer" class="underline">OpenMapTiles</a>, data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" class="underline">OpenStreetMap</a> contributors. Park photos: National Park Service.</p>
+{% else %}
+<div id="results" class="mt-4 pb-24 md:pb-20">
   {% include "partials/park_list.html" %}
 </div>
+{% endif %}
+
+{# Floating List / Map toggle: always reachable, keeps the search and filters (FR-8). #}
+<nav aria-label="View" class="safe-bottom-float fixed left-1/2 z-30 -translate-x-1/2 md:left-[calc(50%+7.5rem)]">
+  <div class="inline-flex rounded-full border border-slate-300 bg-white/95 p-1 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+    {% for key, label in [("list", "List"), ("map", "Map")] %}
+    <a href="{{ filters.query(key) }}" data-view-toggle="{{ key }}"
+       {% if view == key %}aria-current="true"{% endif %}
+       class="inline-flex min-h-[44px] min-w-[84px] items-center justify-center rounded-full px-5 text-sm font-semibold
+              {% if view == key %}bg-sky-600 text-white dark:bg-sky-500 dark:text-slate-950{% else %}text-slate-600 dark:text-slate-300{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+</nav>
 {% elif not pending %}
 {{ empty_state("No parks yet", "The park list loads from the National Park Service. Ask the admin to check the setup if this stays empty.", "tree", "emerald") }}
 {% endif %}

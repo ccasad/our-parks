@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import urlencode
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -44,6 +45,24 @@ class Filters:
     @property
     def is_default(self) -> bool:
         return self == Filters()
+
+    def query(self, view: str = "list") -> str:
+        """The URL query that gives back these filters, for the List/Map toggle (FR-8)."""
+        pairs: list[tuple[str, str]] = []
+        if not self.is_default:
+            pairs.append(("f", "1"))
+            if self.q:
+                pairs.append(("q", self.q))
+            if self.visited != "all":
+                pairs.append(("visited", self.visited))
+            pairs.extend(("type", t) for t in self.types)
+            if self.state:
+                pairs.append(("state", self.state))
+            if self.activity:
+                pairs.append(("activity", self.activity))
+        if view == "map":
+            pairs.append(("view", "map"))
+        return "?" + urlencode(pairs) if pairs else "/"
 
 
 @dataclass
@@ -134,3 +153,28 @@ def find_parks(db: Session, filters: Filters) -> Result:
             continue
         rows.append(ParkRow(park, visited=bool(count), rating=rating or None, visits=count))
     return Result(rows, visited_count, len(parks), label)
+
+
+def map_points(result: Result) -> list[dict[str, Any]]:
+    """What the map needs for each park with a location (FR-9, FR-10)."""
+    points = []
+    for row in result.rows:
+        park = row.park
+        if park.latitude is None or park.longitude is None:
+            continue
+        thumb = row.thumbnail
+        points.append(
+            {
+                "code": park.park_code,
+                "name": park.name,
+                "states": ", ".join(park.state_list),
+                "lat": park.latitude,
+                "lon": park.longitude,
+                "visited": row.visited,
+                "rating": row.rating,
+                "photo": thumb["url"] if thumb else None,
+                "alt": thumb["alt"] if thumb else "",
+                "credit": thumb["credit"] if thumb else "",
+            }
+        )
+    return points
