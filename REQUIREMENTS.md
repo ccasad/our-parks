@@ -20,7 +20,7 @@ A family app for browsing US National Park Service sites and keeping a shared lo
 ## Feature to-do list
 
 - [x] Load and cache the NPS park list (refresh daily on first open, or on demand) (FR-1, FR-2)
-- [ ] Parks tab: list with search and filters (type defaults to National Park), progress line (FR-3 to FR-6)
+- [x] Parks tab: list with search and filters (type defaults to National Park), progress line (FR-3 to FR-6)
 - [ ] Park page (photos, description, activities, links to NPS.gov and Google Maps) (FR-12, FR-13)
 - [ ] Family members list (for "who went") (FR-18)
 - [ ] Log, edit and delete visits; family rating; visited badge (FR-14 to FR-16)

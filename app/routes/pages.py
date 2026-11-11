@@ -6,19 +6,11 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app import refresh
-from app.routes.parks import status_context
 from app.sessions import DbSession, SignedInUser, same_origin
 from app.theme import THEMES, remember_theme
 from app.web import render
 
 router = APIRouter()
-
-
-@router.get("/", response_class=HTMLResponse, name="home")
-def home(request: Request, db: DbSession, user: SignedInUser) -> HTMLResponse:
-    context = status_context(db, user)
-    db.commit()  # the status row may have just been created
-    return render(request, "pages/home.html", title="Parks", user=user, active="parks", **context)
 
 
 @router.get("/visits", response_class=HTMLResponse, name="visits")

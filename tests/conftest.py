@@ -90,3 +90,43 @@ def member(db):
 @pytest.fixture
 def admin(db):
     return make_user(db, email="admin@example.com", name="Admin", role="admin")
+
+
+def make_park(
+    db, code="yose", name="Yosemite National Park", designation="National Park", **fields
+):
+    from app.models import Park
+
+    fields.setdefault("states", "CA")
+    fields.setdefault("latitude", 37.85)
+    fields.setdefault("longitude", -119.57)
+    fields.setdefault("activities", ["Hiking"])
+    fields.setdefault("images", [])
+    fields.setdefault("description", "A made-up description.")
+    fields.setdefault("url", f"https://www.nps.gov/{code}/index.htm")
+    park = Park(park_code=code, name=name, designation=designation, **fields)
+    db.add(park)
+    db.commit()
+    return park
+
+
+def make_visit(db, park, *, rating=4, on=None, note=None, members=(), user=None):
+    from datetime import date
+
+    from app.models import FamilyMember, Visit
+
+    if not members:
+        member = FamilyMember(name="Sam Example")
+        db.add(member)
+        members = [member]
+    visit = Visit(
+        park_id=park.id,
+        visit_date=on or date(2026, 7, 1),
+        rating=rating,
+        note=note,
+        created_by_id=user.id if user else None,
+        members=list(members),
+    )
+    db.add(visit)
+    db.commit()
+    return visit

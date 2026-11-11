@@ -239,3 +239,18 @@ def test_parse_park_handles_missing_fields():
         [],
     )
     assert json.dumps(park)  # plain data, ready for JSON columns
+
+
+def test_a_park_nps_drops_is_kept_while_it_has_a_visit(db, nps_api):
+    from tests.conftest import make_visit
+
+    refresh.run_step(db)
+    kept = parks(db)[0]
+    make_visit(db, kept)
+    nps_api.parks = nps_api.parks[1:]
+
+    refresh.run_step(db, restart=True)
+
+    codes = [p.park_code for p in parks(db)]
+    assert len(codes) == 120
+    assert kept.park_code in codes

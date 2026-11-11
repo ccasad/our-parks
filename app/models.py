@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any, ClassVar
 
 from sqlalchemy import (
@@ -230,3 +230,47 @@ class ParkRefresh(Base):
     total: Mapped[int | None]
     # A short, safe reason (never the API's own text)
     error: Mapped[str | None] = mapped_column(Text)
+
+
+class FamilyMember(Base):
+    """A name offered under "who went". Not a sign-in account; shared by the whole family."""
+
+    __tablename__ = "family_members"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    # May be a child's name, so encrypted at rest
+    name: Mapped[str] = mapped_column(EncryptedText)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+
+class VisitMember(Base):
+    """Who went on a visit. A family member in a visit can't be removed (FR-18)."""
+
+    __tablename__ = "visit_members"
+
+    visit_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("visits.id", ondelete="CASCADE"), primary_key=True
+    )
+    family_member_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("family_members.id", ondelete="RESTRICT"), primary_key=True, index=True
+    )
+
+
+class Visit(Base):
+    """One trip to a park, in the family's shared log. Any signed-in member can change it."""
+
+    __tablename__ = "visits"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    # No cascade: a park NPS drops is kept while the family has a visit to it.
+    park_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("parks.id"), index=True)
+    visit_date: Mapped[date]
+    rating: Mapped[int]  # 1 to 5
+    note: Mapped[str | None] = mapped_column(EncryptedText)
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+    park: Mapped[Park] = relationship()
+    members: Mapped[list[FamilyMember]] = relationship(secondary="visit_members")

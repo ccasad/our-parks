@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app import nps
 from app.config import get_settings
-from app.models import Park, ParkRefresh, utcnow
+from app.models import Park, ParkRefresh, Visit, utcnow
 
 # Below Vercel's 60 second limit, checked between pages.
 TIME_BUDGET = 40.0
@@ -133,9 +133,11 @@ def _store(db: Session, rows: list[dict]) -> None:
 
 
 def _finish(db: Session, state: ParkRefresh) -> None:
-    # Anything not touched since this run began is gone from NPS.
+    # Anything not touched since this run began is gone from NPS, unless the family has
+    # logged a visit there.
     if state.started_at is not None and state.next_start > 0:
-        db.execute(delete(Park).where(Park.fetched_at < state.started_at))
+        visited = select(Visit.park_id)
+        db.execute(delete(Park).where(Park.fetched_at < state.started_at, Park.id.not_in(visited)))
     state.status = "done"
     state.error = None
     state.refreshed_at = utcnow()
