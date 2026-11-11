@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon, empty_state %}
+{% block content %}
+<a href="/more" class="mb-4 inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-sky-700 dark:text-sky-400">
+  {{ icon("chevron", "size-4 rotate-180") }} More
+</a>
+<div class="max-w-2xl">
+  <p class="text-sm text-slate-500 dark:text-slate-400">These are the names offered under "who went" when you add a visit. They're separate from sign-in accounts, so people without an account can be included.</p>
+
+  {% if notice %}<p role="status" class="mt-4 rounded-lg bg-slate-100 px-4 py-3 text-sm dark:bg-slate-800">{{ notice }}</p>{% endif %}
+
+  <form method="post" action="/family" class="mt-4 flex gap-2">
+    <label for="new-name" class="sr-only">Name</label>
+    <input id="new-name" name="name" required maxlength="100" autocomplete="off" placeholder="Add a name"
+           class="min-h-[48px] min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-4 dark:border-slate-700 dark:bg-slate-900">
+    <button type="submit" class="min-h-[48px] shrink-0 rounded-lg bg-sky-600 px-5 font-semibold text-white hover:bg-sky-700 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">Add</button>
+  </form>
+
+  {% if members %}
+  <ul class="mt-4 divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900" data-members>
+    {% for member in members %}
+    <li class="px-4 py-3">
+      <form method="post" action="/family/{{ member.id }}/rename" class="flex items-center gap-2">
+        <label for="name-{{ member.id }}" class="sr-only">Name</label>
+        <input id="name-{{ member.id }}" name="name" value="{{ member.name }}" required maxlength="100" autocomplete="off"
+               class="min-h-[44px] min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 font-medium hover:border-slate-300 focus:border-slate-300 dark:hover:border-slate-700 dark:focus:border-slate-700">
+        <button type="submit" class="min-h-[44px] shrink-0 px-3 text-sm font-medium text-sky-700 dark:text-sky-400">Rename</button>
+      </form>
+      <form method="post" action="/family/{{ member.id }}/remove" class="mt-1 flex items-center justify-between gap-2"
+            {% if member.id not in in_use %}onsubmit="return confirm('Remove this person from the list?')"{% endif %}>
+        {% if member.id in in_use %}
+        <span class="px-2 text-xs text-slate-500 dark:text-slate-400">On a visit, so it can't be removed</span>
+        {% else %}
+        <span></span>
+        {% endif %}
+        <button type="submit" class="min-h-[44px] px-3 text-sm text-red-600 dark:text-red-400">Remove</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="mt-4">{{ empty_state("No names yet", "Add the people who go on trips, then pick them when you log a visit.", "users", "violet") }}</div>
+  {% endif %}
+</div>
+{% endblock %}
