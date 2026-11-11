@@ -29,6 +29,8 @@ A family app for browsing US National Park Service sites and keeping a shared lo
 - [x] "Near me" filter using the browser's current location (FR-7, FR-11)
 - [x] More tab: invite, refresh park data, settings (FR-19)
 - [x] The app's own icon: a white pine tree
+- [ ] Sort control on the park list (FR-20, FR-21; changes FR-3, FR-7)
+- [ ] Pine-tree markers on the map (changes FR-9)
 
 ## Users and access
 
@@ -48,16 +50,18 @@ Invite-only: an admin plus the people they invite. No public sign-up. All member
 
 **Parks tab: list**
 
-- **FR-3** The Parks tab opens in List view, filtered to type "National Park" and sorted by name. Each row shows a thumbnail, the name, the state(s), a "Visited" badge if the family has a visit, and the family rating.
+- **FR-3** The Parks tab opens in List view, filtered to type "National Park" and sorted by name A–Z (the default; the Sort control, FR-20, changes it). Each row shows a thumbnail, the name, the state(s), a "Visited" badge if the family has a visit, and the family rating.
 - **FR-4** A progress line above the list reads "N of M &lt;type&gt; visited" for the current type filter, e.g. "5 of 63 National Parks visited".
 - **FR-5** A search box filters parks by name as the user types (e.g. "yose" finds Yosemite).
 - **FR-6** Filters: Visited (all / visited / not visited), Type (one or more designations, default National Park), State, and Activity. Filters and search combine; a "Clear" button resets them to the defaults.
-- **FR-7** "Near me": tapping it asks the browser for the current location, then sorts parks by distance with the distance shown in miles. An optional radius (100 / 250 / 500 miles, or any) limits the results. The location is sent in the request body, never in the URL, and is never stored or logged. If permission is denied, a message explains and the list is unchanged.
+- **FR-7** "Near me": tapping it asks the browser for the current location, then selects Distance in the Sort control (FR-21) and shows each park's distance in miles. An optional radius (100 / 250 / 500 miles, or any) limits the results. The location is sent in the request body, never in the URL, and is never stored or logged. If permission is denied, a message explains and the list is unchanged.
+- **FR-20** A "Sort" control sits on the right of the progress line, on the same row, above the list. It offers: Name A–Z (default), Name Z–A, State (by first state, then name), Family rating (highest first; unrated last), Last visited (most recent visit first; never-visited last), and Distance (nearest first). Distance is offered only while "Near me" is on. Ties sort by name A–Z. The control shows the current choice.
+- **FR-21** The chosen sort is kept while switching between List and Map and while changing search or filters, and resets to Name A–Z the next time the app is opened. Turning "Near me" on selects Distance; turning it off while Distance is selected returns to Name A–Z.
 - **FR-8** A floating List / Map toggle sits near the bottom of the screen above the tab bar and stays visible while scrolling. Switching views keeps the current search and filters.
 
 **Parks tab: map**
 
-- **FR-9** Map view uses MapLibre GL with OpenFreeMap tiles and shows a marker for each park matching the current search and filters: green for visited, grey for not visited.
+- **FR-9** Map view uses MapLibre GL with OpenFreeMap tiles and shows a marker for each park matching the current search and filters. Markers are small pine-tree shapes matching the app icon, about 20 px tall: green for visited, brown for not visited. Visited markers draw above not-visited ones where they overlap. The tree's base is anchored at the park's location, and the tap target is at least 32 px.
 - **FR-10** Tapping a marker opens a small card with the photo, name, state(s), visited badge and rating, and a link to the park page.
 - **FR-11** With "Near me" on, the map centres on the user's location and shows a marker for it.
 
