@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Query, Request
+from fastapi import APIRouter, Depends, Form, Path, Query, Request
 from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from app import audit, refresh
 from app.models import User
 from app.park_list import Filters, activities, designations, find_parks, states
 from app.sessions import DbSession, SignedInUser, same_origin
+from app.visits import get_park, latest_rating, park_visits
 from app.web import NO_STORE, render, templates
 
 router = APIRouter()
@@ -63,6 +64,34 @@ def parks_page(
         all_states=states(db),
         all_activities=activities(db),
         **context,
+    )
+
+
+@router.get("/parks/{park_code}", response_class=HTMLResponse)
+def park_page(
+    request: Request,
+    db: DbSession,
+    user: SignedInUser,
+    park_code: Annotated[str, Path(pattern="^[A-Za-z0-9]{1,20}$")],
+) -> HTMLResponse:
+    park = get_park(db, park_code)
+    visits = park_visits(db, park)
+    directions = None
+    if park.latitude is not None and park.longitude is not None:
+        directions = (
+            "https://www.google.com/maps/dir/?api=1&destination="
+            f"{park.latitude:.6f},{park.longitude:.6f}"
+        )
+    return render(
+        request,
+        "pages/park.html",
+        title=park.name,
+        user=user,
+        active="parks",
+        park=park,
+        visits=visits,
+        rating=latest_rating(visits),
+        directions_url=directions,
     )
 
 

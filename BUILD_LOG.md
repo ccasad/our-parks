@@ -4,9 +4,9 @@
 - Make the template into Our Parks: name, tabs, icon, CLAUDE.md
 - Load and cache the NPS park list (FR-1, FR-2) — Load and cache the NPS park list, daily and on demand
 - Parks tab: list with search and filters (FR-3 to FR-6) — Add the Parks list with search, filters and progress
+- Park page (FR-12, FR-13) — Add the park page with photos, details, links and visits
 
 ## Next
-- Park page (FR-12, FR-13)
 - Family members list (FR-18)
 - Log, edit and delete visits; family rating; visited badge (FR-14 to FR-16)
 - Visits tab (FR-17)

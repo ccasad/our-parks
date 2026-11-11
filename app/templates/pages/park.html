@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon, empty_state %}
+{% from "partials/stars.html" import stars %}
+{% from "partials/visit_item.html" import visit_item %}
+{% block content %}
+<a href="/" class="mb-4 inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-sky-700 dark:text-sky-400">
+  {{ icon("chevron", "size-4 rotate-180") }} Parks
+</a>
+
+<p class="text-sm text-slate-500 dark:text-slate-400">{{ park.designation }}{% if park.state_list %} · {{ park.state_list | join(", ") }}{% endif %}</p>
+
+<div class="mt-2 flex flex-wrap items-center gap-3">
+  {% if visits %}
+  <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Visited</span>
+  {{ stars(rating) }}
+  {% else %}
+  <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">Not visited yet</span>
+  {% endif %}
+</div>
+
+{% if park.images %}
+<section aria-label="Photos" class="mt-4">
+  {# Swipe sideways; each photo snaps into place. #}
+  <ul class="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0" tabindex="0" data-photos>
+    {% for image in park.images %}
+    <li class="w-[85%] shrink-0 snap-center md:w-[28rem]">
+      <figure>
+        <img src="{{ image.url }}" alt="{{ image.alt }}" loading="{{ 'eager' if loop.first else 'lazy' }}"
+             class="aspect-[4/3] w-full rounded-xl bg-slate-200 object-cover dark:bg-slate-800">
+        <figcaption class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          {% if image.caption or image.title %}{{ image.caption or image.title }}{% endif %}
+          {% if image.credit %}<span class="block">Photo: {{ image.credit }}</span>{% endif %}
+        </figcaption>
+      </figure>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if park.images | length > 1 %}<p class="text-xs text-slate-500 dark:text-slate-400">{{ park.images | length }} photos. Swipe to see more.</p>{% endif %}
+</section>
+{% endif %}
+
+{% if park.description %}
+<section aria-labelledby="about-heading" class="mt-6">
+  <h2 id="about-heading" class="mb-2 text-lg font-semibold">About</h2>
+  <p class="leading-relaxed">{{ park.description }}</p>
+</section>
+{% endif %}
+
+{% if park.activities %}
+<section aria-labelledby="activities-heading" class="mt-6">
+  <h2 id="activities-heading" class="mb-2 text-lg font-semibold">Things to do</h2>
+  <ul class="flex flex-wrap gap-2">
+    {% for name in park.activities %}
+    <li class="rounded-full bg-slate-100 px-3 py-1 text-sm dark:bg-slate-800">{{ name }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section aria-label="Links" class="mt-6 flex flex-wrap gap-3">
+  {% if park.url %}
+  <a href="{{ park.url }}" target="_blank" rel="noopener noreferrer"
+     class="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-slate-300 px-5 font-medium dark:border-slate-700">NPS.gov page</a>
+  {% endif %}
+  {% if directions_url %}
+  <a href="{{ directions_url }}" target="_blank" rel="noopener noreferrer"
+     class="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-slate-300 px-5 font-medium dark:border-slate-700">Directions in Google Maps</a>
+  {% endif %}
+</section>
+
+<section aria-labelledby="visits-heading" class="mt-8">
+  <div class="mb-3 flex items-center justify-between gap-3">
+    <h2 id="visits-heading" class="text-lg font-semibold">Family visits</h2>
+    <a href="/parks/{{ park.park_code }}/visits/new"
+       class="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-sky-600 px-5 font-semibold text-white hover:bg-sky-700 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">Add visit</a>
+  </div>
+  {% if visits %}
+  <ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900" data-visits>
+    {% for visit in visits %}
+    <li class="flex items-start gap-3 px-4 py-3">
+      {{ visit_item(visit) }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  {{ empty_state("No visits yet", "Add a visit when you've been here.", "calendar-check", "emerald") }}
+  {% endif %}
+</section>
+{% endblock %}
