@@ -9,9 +9,9 @@
 - Log, edit and delete visits; family rating; visited badge (FR-14 to FR-16) — Log, edit and delete visits and list them on the Visits tab
 - Visits tab (FR-17) — same commit as above
 - Map view with the floating List/Map toggle (FR-8 to FR-10) — Add the map view and the floating List/Map toggle
+- "Near me" filter using the browser's current location (FR-7, FR-11) — Add "Near me" with distances, a radius and a map centred on you
 
 ## Next
-- "Near me" filter (FR-7, FR-11)
 - More tab: invite, refresh park data, settings (FR-19)
 
 ## Decisions
@@ -29,6 +29,8 @@
 - The family is one shared group, so "scoped to the signed-in user's family" means any signed-in member; unknown IDs return 404.
 
 - Map: markers are DOM buttons (keyboard and screen-reader friendly); the card is built with `textContent`. The map frames the lower 48 when any parks are there (Alaska, Hawaii and territories would otherwise zoom out to the world). The OpenFreeMap credit is also written under the map, in addition to MapLibre's own attribution control. The map code and library load only when a map is on the page. Not checked in a real browser here (no browser in this environment): tests cover the data and markup only.
+
+- Near me: `POST /parks/near` takes the filters plus `lat`/`lon`/`radius` in the body and returns the list or map data (responds with `HX-Push-Url: false`, so it never reaches the address bar). While it is on, `near_me.js` turns the form's requests into that POST and the List/Map toggle into a form post. The location lives only in disabled-until-used hidden fields on the page; it is rounded to about 100 m, never stored, never in a URL, and no log line includes it (tested). `vercel.json`'s Permissions-Policy now allows `geolocation=(self)` (it blocked it before). Parks without coordinates are left out while Near me is on. Not run in a real browser here.
 
 ## Needs a human
 - Register a free NPS API key (nps.gov/subjects/developer) and set it as `NPS_API_KEY` in Vercel.

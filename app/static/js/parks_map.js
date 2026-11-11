@@ -100,12 +100,26 @@
     map.fitBounds(bounds, { padding: 40, maxZoom: 7, duration: 0 });
   }
 
+  function meMarker(near) {
+    var dot = el("div", "park-marker is-me");
+    dot.setAttribute("role", "img");
+    dot.setAttribute("aria-label", "Your location");
+    return new maplibregl.Marker({ element: dot }).setLngLat([near.lon, near.lat]).addTo(map);
+  }
+
   function draw(framed) {
     if (!map) return;
     markers.forEach(function (m) { m.remove(); });
-    var points = readData().points || [];
+    var data = readData();
+    var points = data.points || [];
     markers = points.map(marker);
-    if (framed) fit(points);
+    if (data.near) {
+      // Near me: centre on the person and show where they are (FR-11).
+      markers.push(meMarker(data.near));
+      if (framed) map.jumpTo({ center: [data.near.lon, data.near.lat], zoom: 6 });
+    } else if (framed) {
+      fit(points);
+    }
   }
 
   function failed() {

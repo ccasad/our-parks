@@ -6,14 +6,31 @@
 {% if all_types %}
 <form id="filters" method="get" action="/" role="search"
       hx-get="/" hx-target="#results" hx-swap="innerHTML" hx-push-url="true" hx-sync="this:replace"
-      hx-trigger="input changed delay:250ms from:#q, change">
+      hx-trigger="input changed delay:250ms from:#q, change, submit">
   <input type="hidden" name="f" value="1">
   {% if view == "map" %}<input type="hidden" name="view" value="map">{% endif %}
   <div class="flex gap-2">
     <label for="q" class="sr-only">Search parks by name</label>
     <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="Search parks" autocomplete="off" enterkeyhint="search"
            class="min-h-[48px] min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-4 dark:border-slate-700 dark:bg-slate-900">
+    <button type="button" data-near-toggle aria-pressed="{{ 'true' if near else 'false' }}"
+            class="inline-flex min-h-[48px] shrink-0 items-center gap-1.5 rounded-lg border px-4 font-medium
+                   {% if near %}border-sky-600 bg-sky-50 text-sky-800 dark:border-sky-400 dark:bg-sky-950 dark:text-sky-200{% else %}border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900{% endif %}">
+      {{ icon("pin", "size-5") }}<span>Near me</span>
+    </button>
   </div>
+  {# Near me: the location is held in these fields and sent in a POST body, never in the URL. #}
+  <div data-near-options class="mt-2 flex items-center gap-2 text-sm" {% if not near %}hidden{% endif %}>
+    <input type="hidden" name="lat" value="{{ near[0] if near }}" {% if not near %}disabled{% endif %}>
+    <input type="hidden" name="lon" value="{{ near[1] if near }}" {% if not near %}disabled{% endif %}>
+    <label for="radius" class="font-medium">Within</label>
+    <select id="radius" name="radius" {% if not near %}disabled{% endif %}
+            class="min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900">
+      <option value="any">Any distance</option>
+      {% for miles in [100, 250, 500] %}<option value="{{ miles }}" {% if radius == miles %}selected{% endif %}>{{ miles }} miles</option>{% endfor %}
+    </select>
+  </div>
+  <p id="near-message" role="status" hidden class="mt-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/50 dark:text-amber-200"></p>
 
   <details class="mt-3 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900" {% if active_count %}open{% endif %}>
     <summary class="flex min-h-[48px] cursor-pointer items-center justify-between px-4 font-medium">

@@ -3,4 +3,4 @@
   {{ result.visited_count }} of {{ result.type_total }} {{ result.progress_label }} visited
   <span class="font-normal text-slate-500 dark:text-slate-400">· {{ points | length }} on the map</span>
 </p>
-<script type="application/json" id="map-data">{{ {"points": points} | tojson }}</script>
+<script type="application/json" id="map-data">{{ {"points": points, "near": ({"lat": near[0], "lon": near[1]} if near else none)} | tojson }}</script>

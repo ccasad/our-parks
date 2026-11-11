@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app import audit, refresh
 from app.config import get_settings
 from app.models import User
-from app.park_list import Filters, activities, designations, find_parks, map_points, states
+from app.park_list import RADII, Filters, activities, designations, find_parks, map_points, states
 from app.sessions import DbSession, SignedInUser, same_origin
 from app.visits import get_park, latest_rating, park_visits
 from app.web import NO_STORE, render, templates
@@ -25,6 +25,50 @@ def status_context(db: Session, user: User) -> dict:
         "is_admin": user.is_admin,
         "configured": refresh.configured(),
     }
+
+
+def show_parks(
+    request: Request,
+    db: Session,
+    user: User,
+    filters: Filters,
+    view: str | None,
+    near: tuple[float, float] | None = None,
+    radius: int | None = None,
+) -> HTMLResponse:
+    result = find_parks(db, filters, near=near, radius=radius)
+    view = "map" if view == "map" else "list"
+    context = {
+        "filters": filters,
+        "result": result,
+        "view": view,
+        "points": map_points(result),
+        "near": near,
+        "radius": radius,
+    }
+    # Typing in the search box swaps only the list (or the map's data), not the whole page.
+    if request.headers.get("hx-target") == "results":
+        template = "partials/park_map_data.html" if view == "map" else "partials/park_list.html"
+        headers = dict(NO_STORE)
+        if near is not None:
+            # The request came from a POST to /parks/near; never put that in the address bar.
+            headers["HX-Push-Url"] = "false"
+        return templates.TemplateResponse(request, template, context, headers=headers)
+    status = status_context(db, user)
+    db.commit()  # the refresh status row may have just been created
+    return render(
+        request,
+        "pages/home.html",
+        title="Parks",
+        user=user,
+        active="parks",
+        map_style_url=get_settings().map_style_url,
+        all_types=designations(db),
+        all_states=states(db),
+        all_activities=activities(db),
+        **context,
+        **status,
+    )
 
 
 @router.get("/", response_class=HTMLResponse, name="home")
@@ -43,34 +87,35 @@ def parks_page(
     filters = Filters.from_query(
         q=q, visited=visited, types=types, state=state, activity=activity, submitted=bool(f)
     )
-    result = find_parks(db, filters)
-    view = "map" if view == "map" else "list"
-    # Typing in the search box swaps only the list (or the map's data), not the whole page.
-    if request.headers.get("hx-target") == "results":
-        return templates.TemplateResponse(
-            request,
-            "partials/park_map_data.html" if view == "map" else "partials/park_list.html",
-            {"filters": filters, "result": result, "points": map_points(result)},
-            headers=NO_STORE,
-        )
-    context = status_context(db, user)
-    db.commit()  # the refresh status row may have just been created
-    return render(
-        request,
-        "pages/home.html",
-        title="Parks",
-        user=user,
-        active="parks",
-        filters=filters,
-        result=result,
-        view=view,
-        points=map_points(result),
-        map_style_url=get_settings().map_style_url,
-        all_types=designations(db),
-        all_states=states(db),
-        all_activities=activities(db),
-        **context,
+    return show_parks(request, db, user, filters, view)
+
+
+@router.post("/parks/near", response_class=HTMLResponse, dependencies=[Depends(same_origin)])
+def parks_near(
+    request: Request,
+    db: DbSession,
+    user: SignedInUser,
+    lat: Annotated[float, Form(ge=-90, le=90)],
+    lon: Annotated[float, Form(ge=-180, le=180)],
+    q: Annotated[str | None, Form(max_length=100)] = None,
+    visited: Annotated[str | None, Form(max_length=10)] = None,
+    types: Annotated[list[str] | None, Form(alias="type")] = None,
+    state: Annotated[str | None, Form(max_length=2)] = None,
+    activity: Annotated[str | None, Form(max_length=100)] = None,
+    f: Annotated[str | None, Form(max_length=1)] = None,
+    view: Annotated[str | None, Form(max_length=4)] = None,
+    radius: Annotated[str | None, Form(max_length=4)] = None,
+) -> HTMLResponse:
+    """The list or map sorted by distance from where the person is (FR-7, FR-11).
+
+    A POST so the location travels in the request body, never the URL. It is used to
+    work out distances for this response and is not stored or logged.
+    """
+    filters = Filters.from_query(
+        q=q, visited=visited, types=types, state=state, activity=activity, submitted=bool(f)
     )
+    miles = int(radius) if radius and radius.isdigit() and int(radius) in RADII else None
+    return show_parks(request, db, user, filters, view, near=(lat, lon), radius=miles)
 
 
 @router.get("/parks/{park_code}", response_class=HTMLResponse)

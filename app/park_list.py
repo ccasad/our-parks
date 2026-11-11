@@ -1,5 +1,6 @@
 """Finding parks for the list and the map: search and filters (FR-3 to FR-6)."""
 
+import math
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlencode
@@ -11,6 +12,8 @@ from app.models import Park, Visit
 
 DEFAULT_TYPE = "National Park"
 VISITED_CHOICES = ("all", "visited", "not")
+RADII = (100, 250, 500)  # miles; anything else means "any"
+EARTH_RADIUS_MILES = 3958.8
 
 
 @dataclass
@@ -124,7 +127,26 @@ def activities(db: Session) -> list[str]:
     return sorted(names, key=str.lower)
 
 
-def find_parks(db: Session, filters: Filters) -> Result:
+def miles_between(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance (haversine)."""
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    a = (
+        math.sin((p2 - p1) / 2) ** 2
+        + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lon2 - lon1) / 2) ** 2
+    )
+    return 2 * EARTH_RADIUS_MILES * math.asin(math.sqrt(a))
+
+
+def find_parks(
+    db: Session,
+    filters: Filters,
+    *,
+    near: tuple[float, float] | None = None,
+    radius: int | None = None,
+) -> Result:
+    """Parks matching the filters. With `near` (latitude, longitude), nearest first with the
+    distance in miles, optionally within `radius` miles (FR-7). The location is used for this
+    call only."""
     query = select(Park).order_by(Park.name)
     if filters.types:
         query = query.where(Park.designation.in_(filters.types))
@@ -151,7 +173,18 @@ def find_parks(db: Session, filters: Filters) -> Result:
             continue
         if filters.activity and filters.activity not in (park.activities or []):
             continue
-        rows.append(ParkRow(park, visited=bool(count), rating=rating or None, visits=count))
+        miles = None
+        if near is not None:
+            if park.latitude is None or park.longitude is None:
+                continue
+            miles = miles_between(near[0], near[1], park.latitude, park.longitude)
+            if radius is not None and miles > radius:
+                continue
+        rows.append(
+            ParkRow(park, visited=bool(count), rating=rating or None, visits=count, miles=miles)
+        )
+    if near is not None:
+        rows.sort(key=lambda row: row.miles)
     return Result(rows, visited_count, len(parks), label)
 
 

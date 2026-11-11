@@ -5,7 +5,9 @@ from tests.conftest import make_park, make_visit, sign_in
 
 
 def points(html):
-    raw = re.search(r'<script type="application/json" id="map-data">(.*?)</script>', html, re.DOTALL)
+    raw = re.search(
+        r'<script type="application/json" id="map-data">(.*?)</script>', html, re.DOTALL
+    )
     return json.loads(raw.group(1))["points"]
 
 
