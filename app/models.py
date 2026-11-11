@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     LargeBinary,
     String,
+    Text,
     TypeDecorator,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -184,3 +185,48 @@ class AuditEvent(Base):
     )
     event: Mapped[str] = mapped_column(String(50))
     detail: Mapped[dict[str, Any]] = mapped_column(default=dict)
+
+
+class Park(Base):
+    """An NPS site, cached from the NPS API. Public data shared by everyone, never user-owned."""
+
+    __tablename__ = "parks"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    park_code: Mapped[str] = mapped_column(String(20), unique=True)
+    name: Mapped[str] = mapped_column(Text)
+    # "National Park", "National Monument", ... ("Other" when NPS gives none)
+    designation: Mapped[str] = mapped_column(Text, index=True)
+    # Two-letter state codes, comma separated, e.g. "CA,NV"
+    states: Mapped[str] = mapped_column(Text, default="", server_default="")
+    latitude: Mapped[float | None]
+    longitude: Mapped[float | None]
+    description: Mapped[str] = mapped_column(Text, default="", server_default="")
+    activities: Mapped[list[str]] = mapped_column(default=list)
+    # [{"url", "title", "caption", "credit", "alt"}]: shown from NPS's own URLs, never stored
+    images: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    url: Mapped[str] = mapped_column(Text, default="", server_default="")
+    fetched_at: Mapped[datetime] = mapped_column(default=utcnow)
+
+    @property
+    def state_list(self) -> list[str]:
+        return [s for s in self.states.split(",") if s]
+
+
+class ParkRefresh(Base):
+    """Progress of loading the park list from NPS (one row, id 1), so a refresh can span requests."""
+
+    __tablename__ = "park_refreshes"
+
+    id: Mapped[int] = mapped_column(primary_key=True, default=1)
+    # "idle", "running", "done" or "failed"
+    status: Mapped[str] = mapped_column(String(10), default="idle", server_default="idle")
+    started_at: Mapped[datetime | None]
+    # When the last attempt ended, successful or not (a failed attempt waits an hour)
+    attempted_at: Mapped[datetime | None]
+    # When the stored copy was last completely refreshed
+    refreshed_at: Mapped[datetime | None]
+    next_start: Mapped[int] = mapped_column(default=0, server_default="0")
+    total: Mapped[int | None]
+    # A short, safe reason (never the API's own text)
+    error: Mapped[str | None] = mapped_column(Text)

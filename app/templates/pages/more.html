@@ -11,6 +11,24 @@
   </div>
   {{ icon("chevron", "size-5 shrink-0 text-slate-400") }}
 </a>
+
+<section aria-labelledby="parks-heading" class="mb-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+  <h2 id="parks-heading" class="flex items-center gap-3 font-medium">{{ icon_badge("tree", "emerald") }}Park data</h2>
+  <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+    {{ park_count }} park{{ "" if park_count == 1 else "s" }} stored.
+    {% if park_state and park_state.refreshed_at %}Last updated <time datetime="{{ park_state.refreshed_at.isoformat() }}" data-local="datetime">{{ park_state.refreshed_at.strftime("%b %-d, %Y") }}</time>.{% else %}Not loaded yet.{% endif %}
+    It updates itself on the first visit each day.
+  </p>
+  {% if not parks_configured %}
+  <p class="mt-2 text-sm text-amber-700 dark:text-amber-400">The NPS API key isn't set, so parks can't load.</p>
+  {% endif %}
+  <div id="refresh-status" hidden></div>
+  <form method="post" action="/parks/refresh" hx-post="/parks/refresh" hx-target="#refresh-status" hx-swap="outerHTML" class="mt-3">
+    <input type="hidden" name="restart" value="true">
+    <button type="submit" {% if not parks_configured %}disabled{% endif %}
+            class="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-sky-600 px-5 font-semibold text-white hover:bg-sky-700 disabled:opacity-60 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">Refresh park data</button>
+  </form>
+</section>
 {% endif %}
 
 <a href="/account"

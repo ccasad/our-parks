@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     token_encryption_key: str | None = None
     database_url: str | None = None
 
+    # Free key from nps.gov/subjects/developer. Without it the park list can't load.
+    nps_api_key: str | None = None
+    nps_api_url: str = "https://developer.nps.gov/api/v1"
+    # OpenFreeMap style for the map; kept here so the tile source can be swapped.
+    map_style_url: str = "https://tiles.openfreemap.org/styles/liberty"
+
     admin_email: str | None = None
     # Passkeys are bound to this domain; changing it invalidates every passkey.
     webauthn_rp_id: str = "localhost"

@@ -1,0 +1,24 @@
+{#- Park data load status. While `pending`, it asks the server for the next step as soon as it appears. -#}
+{% from "partials/icons.html" import icon %}
+{% if pending %}
+<div id="refresh-status" role="status" hx-post="/parks/refresh" hx-trigger="load" hx-swap="outerHTML"
+     class="mb-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-900">
+  <span class="size-4 shrink-0 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600" aria-hidden="true"></span>
+  <p>Loading parks from the National Park Service{% if refresh.total %}: {{ [refresh.next_start, refresh.total] | min }} of {{ refresh.total }}{% endif %}…</p>
+</div>
+{% elif refresh and refresh.status == "failed" %}
+<div id="refresh-status" role="alert"
+     class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+  <p>{{ refresh.error or "Park data couldn't be loaded." }}</p>
+  {% if is_admin and configured %}
+  <form method="post" action="/parks/refresh" hx-post="/parks/refresh" hx-target="#refresh-status" hx-swap="outerHTML" class="mt-2">
+    <input type="hidden" name="restart" value="true">
+    <button type="submit" class="min-h-[44px] rounded-lg border border-red-300 px-4 font-medium dark:border-red-800">Try again</button>
+  </form>
+  {% elif not is_admin %}
+  <p class="mt-1">Ask the admin to try again.</p>
+  {% endif %}
+</div>
+{% else %}
+<div id="refresh-status" hidden></div>
+{% endif %}

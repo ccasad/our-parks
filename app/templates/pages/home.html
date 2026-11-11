@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/icons.html" import empty_state %}
 {% block content %}
-{{ empty_state("No parks yet", "The park list loads from the National Park Service the first time you open the app.", "tree", "emerald") }}
+{% include "partials/refresh_status.html" %}
+{% if not pending %}{{ empty_state("No parks yet", "The park list loads from the National Park Service. Ask the admin to check the setup if this stays empty.", "tree", "emerald") }}{% endif %}
 {% endblock %}
