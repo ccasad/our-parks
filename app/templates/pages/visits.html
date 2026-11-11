@@ -1,5 +1,19 @@
 {% extends "base.html" %}
-{% from "partials/icons.html" import empty_state %}
+{% from "partials/icons.html" import icon, empty_state %}
+{% from "partials/visit_item.html" import visit_item %}
 {% block content %}
-{{ empty_state("No visits yet", "Visits you log will show up here, newest first.", "calendar-check", "emerald") }}
+{% if visits %}
+<ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900" data-visits>
+  {% for visit in visits %}
+  <li>
+    <a href="/parks/{{ visit.park.park_code }}" class="flex min-h-[56px] items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60">
+      {{ visit_item(visit, with_park=true) }}
+      {{ icon("chevron", "mt-2 size-5 shrink-0 text-slate-400") }}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+{{ empty_state("No visits yet", "Open a park and tap Add visit. Visits show up here, newest first.", "calendar-check", "emerald") }}
+{% endif %}
 {% endblock %}

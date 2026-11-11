@@ -79,6 +79,7 @@
     {% for visit in visits %}
     <li class="flex items-start gap-3 px-4 py-3">
       {{ visit_item(visit) }}
+      <a href="/visits/{{ visit.id }}/edit" class="inline-flex min-h-[44px] shrink-0 items-center px-2 text-sm font-medium text-sky-700 dark:text-sky-400">Edit<span class="sr-only"> visit on {{ visit.visit_date.strftime("%b %-d, %Y") }}</span></a>
     </li>
     {% endfor %}
   </ul>

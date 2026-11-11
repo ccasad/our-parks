@@ -13,11 +13,6 @@ from app.web import render
 router = APIRouter()
 
 
-@router.get("/visits", response_class=HTMLResponse, name="visits")
-def visits(request: Request, user: SignedInUser) -> HTMLResponse:
-    return render(request, "pages/visits.html", title="Visits", user=user, active="visits")
-
-
 @router.get("/more", response_class=HTMLResponse, name="more")
 def more(request: Request, db: DbSession, user: SignedInUser) -> HTMLResponse:
     return render(

@@ -53,4 +53,16 @@
   }
   document.addEventListener("DOMContentLoaded", localTimes);
   document.addEventListener("htmx:afterSettle", localTimes);
+
+  // A new visit's date starts as the viewer's own "today" (the server only knows UTC).
+  function todayDefaults() {
+    document.querySelectorAll("input[data-today]").forEach(function (input) {
+      var now = new Date();
+      var pad = function (n) { return String(n).padStart(2, "0"); };
+      input.value = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+      input.removeAttribute("data-today");
+    });
+  }
+  document.addEventListener("DOMContentLoaded", todayDefaults);
+  document.addEventListener("htmx:afterSettle", todayDefaults);
 })();

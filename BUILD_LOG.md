@@ -6,10 +6,10 @@
 - Parks tab: list with search and filters (FR-3 to FR-6) — Add the Parks list with search, filters and progress
 - Park page (FR-12, FR-13) — Add the park page with photos, details, links and visits
 - Family members list (FR-18) — Add the family members list in More
+- Log, edit and delete visits; family rating; visited badge (FR-14 to FR-16) — Log, edit and delete visits and list them on the Visits tab
+- Visits tab (FR-17) — same commit as above
 
 ## Next
-- Log, edit and delete visits; family rating; visited badge (FR-14 to FR-16)
-- Visits tab (FR-17)
 - Map view with the floating List/Map toggle (FR-8 to FR-10)
 - "Near me" filter (FR-7, FR-11)
 - More tab: invite, refresh park data, settings (FR-19)
@@ -24,6 +24,9 @@
 - Filters live in the URL (`q`, `visited`, `type`, `state`, `activity`, plus `f=1` once the form is used, so "no type ticked" can mean every type while the default is National Park). Nothing personal is in them. The list swaps alone (`HX-Target: results`) while typing.
 - The visits and family-member tables were created in this step (the list needs visits for the badge, rating and filter); their screens come in later items. A park NPS drops is kept while it has a visit (visits have a foreign key to parks).
 - The progress line says "N of M sites visited" when zero or several types are selected.
+
+- Visits: delete uses a confirmation page (works without JavaScript). The date defaults to the server's date, replaced with the viewer's local date by `app.js`. Dates up to one day ahead are accepted (time zones). Audit events `visit_created`, `visit_updated`, `visit_deleted` carry IDs and the park code only.
+- The family is one shared group, so "scoped to the signed-in user's family" means any signed-in member; unknown IDs return 404.
 
 ## Needs a human
 - Register a free NPS API key (nps.gov/subjects/developer) and set it as `NPS_API_KEY` in Vercel.
