@@ -29,7 +29,11 @@
 - The family is one shared group, so "scoped to the signed-in user's family" means any signed-in member; unknown IDs return 404.
 - Map: markers are DOM buttons (keyboard and screen-reader friendly); the card is built with `textContent`. The map frames the lower 48 when any parks are there (Alaska, Hawaii and territories would otherwise zoom out to the world). The OpenFreeMap credit is also written under the map, in addition to MapLibre's own attribution control. The map code and library load only when a map is on the page. Not checked in a real browser here (no browser in this environment): tests cover the data and markup only.
 - Near me: `POST /parks/near` takes the filters plus `lat`/`lon`/`radius` in the body and returns the list or map data (responds with `HX-Push-Url: false`, so it never reaches the address bar). While it is on, `near_me.js` turns the form's requests into that POST and the List/Map toggle into a form post. The location lives only in disabled-until-used hidden fields on the page; it is rounded to about 100 m, never stored, never in a URL, and no log line includes it (tested). `vercel.json`'s Permissions-Policy now allows `geolocation=(self)` (it blocked it before). Parks without coordinates are left out while Near me is on. Not run in a real browser here.
+- Sort (001): kept in a `sort` URL/form field rather than storage, so it resets when the app is reopened. A Near me request with no sort given defaults to Distance. Pine markers are inline SVG in a 32 px button, anchored at the tree's base. Not checked in a real browser.
 
 ## Needs a human
 - Register a free NPS API key (nps.gov/subjects/developer) and set it as `NPS_API_KEY` in Vercel; until then the Parks tab shows an empty state and the admin sees a notice in More.
 - Try the map and Near me in a real browser (including allowing location on a phone): this build had no browser, so only the server side and markup are tested.
+
+## Changes
+- 001-sort-and-tree-markers: Sort menu on the park list; pine-tree map markers (FR-20, FR-21, FR-3, FR-7, FR-9)

@@ -29,8 +29,8 @@ A family app for browsing US National Park Service sites and keeping a shared lo
 - [x] "Near me" filter using the browser's current location (FR-7, FR-11)
 - [x] More tab: invite, refresh park data, settings (FR-19)
 - [x] The app's own icon: a white pine tree
-- [ ] Sort control on the park list (FR-20, FR-21; changes FR-3, FR-7)
-- [ ] Pine-tree markers on the map (changes FR-9)
+- [x] Sort control on the park list (FR-20, FR-21; changes FR-3, FR-7)
+- [x] Pine-tree markers on the map (changes FR-9)
 
 ## Users and access
 

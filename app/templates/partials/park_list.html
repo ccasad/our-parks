@@ -1,9 +1,22 @@
 {#- The progress line and the list of parks; swapped alone while searching and filtering. -#}
 {% from "partials/stars.html" import stars %}
 {% from "partials/icons.html" import icon, empty_state %}
-<p class="mb-3 text-sm font-medium text-slate-600 dark:text-slate-300" data-progress>
-  {{ result.visited_count }} of {{ result.type_total }} {{ result.progress_label }} visited
-</p>
+<div class="mb-3 flex items-center justify-between gap-3">
+  <p class="min-w-0 text-sm font-medium text-slate-600 dark:text-slate-300" data-progress>
+    {{ result.visited_count }} of {{ result.type_total }} {{ result.progress_label }} visited
+  </p>
+  <div class="flex shrink-0 items-center gap-2 text-sm">
+    <label for="sort" class="font-medium">Sort</label>
+    {# Belongs to the filters form, so a sort change and a filter change send each other's values. #}
+    <select id="sort" name="sort" form="filters" data-sort
+            hx-get="/" hx-include="#filters" hx-target="#results" hx-swap="innerHTML" hx-push-url="true" hx-trigger="change"
+            class="min-h-[44px] max-w-[11rem] rounded-lg border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900">
+      {% for key, label in sorts %}
+      <option value="{{ key }}" {% if sort == key %}selected{% endif %}{% if key == "distance" and not near %} hidden disabled{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
 {% if result.rows %}
 <ul class="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900" data-parks>
   {% for row in result.rows %}

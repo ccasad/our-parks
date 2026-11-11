@@ -2,10 +2,11 @@
 
 import math
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any
 from urllib.parse import urlencode
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import Park, Visit
@@ -14,6 +15,25 @@ DEFAULT_TYPE = "National Park"
 VISITED_CHOICES = ("all", "visited", "not")
 RADII = (100, 250, 500)  # miles; anything else means "any"
 EARTH_RADIUS_MILES = 3958.8
+SORTS = (
+    ("name", "Name A–Z"),
+    ("name_desc", "Name Z–A"),
+    ("state", "State"),
+    ("rating", "Family rating"),
+    ("recent", "Last visited"),
+    ("distance", "Distance"),
+)
+SORT_KEYS = tuple(key for key, _ in SORTS)
+DEFAULT_SORT = "name"
+
+
+def clean_sort(value: str | None, near: bool = False) -> str:
+    """A known sort; Distance only makes sense with Near me, which picks it when none is given."""
+    if value not in SORT_KEYS:
+        return "distance" if near else DEFAULT_SORT
+    if value == "distance" and not near:
+        return DEFAULT_SORT
+    return value
 
 
 @dataclass
@@ -49,7 +69,7 @@ class Filters:
     def is_default(self) -> bool:
         return self == Filters()
 
-    def query(self, view: str = "list") -> str:
+    def query(self, view: str = "list", sort: str = DEFAULT_SORT) -> str:
         """The URL query that gives back these filters, for the List/Map toggle (FR-8)."""
         pairs: list[tuple[str, str]] = []
         if not self.is_default:
@@ -63,6 +83,8 @@ class Filters:
                 pairs.append(("state", self.state))
             if self.activity:
                 pairs.append(("activity", self.activity))
+        if sort != DEFAULT_SORT:
+            pairs.append(("sort", sort))
         if view == "map":
             pairs.append(("view", "map"))
         return "?" + urlencode(pairs) if pairs else "/"
@@ -74,6 +96,7 @@ class ParkRow:
     visited: bool = False
     rating: int | None = None  # the latest visit's rating (FR-15)
     visits: int = 0
+    last_visit: date | None = None
     miles: float | None = None
 
     @property
@@ -107,6 +130,15 @@ def visit_summary(db: Session) -> dict[Any, tuple[int, int]]:
     return summary
 
 
+def last_visit_dates(db: Session) -> dict[Any, date]:
+    return {
+        park_id: latest
+        for park_id, latest in db.execute(
+            select(Visit.park_id, func.max(Visit.visit_date)).group_by(Visit.park_id)
+        )
+    }
+
+
 def designations(db: Session) -> list[str]:
     """Every type in the stored data, National Park first."""
     names = db.scalars(select(Park.designation).distinct().order_by(Park.designation)).all()
@@ -137,12 +169,27 @@ def miles_between(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * EARTH_RADIUS_MILES * math.asin(math.sqrt(a))
 
 
+def sort_rows(rows: list[ParkRow], sort: str) -> None:
+    """Order the rows in place (FR-20). `rows` arrive by name, so a stable sort breaks ties A–Z."""
+    if sort == "name_desc":
+        rows.sort(key=lambda r: r.park.name.casefold(), reverse=True)
+    elif sort == "state":
+        rows.sort(key=lambda r: (r.park.state_list or ["~"])[0])
+    elif sort == "rating":
+        rows.sort(key=lambda r: -(r.rating or 0))
+    elif sort == "recent":
+        rows.sort(key=lambda r: -r.last_visit.toordinal() if r.last_visit else 1)
+    elif sort == "distance":
+        rows.sort(key=lambda r: r.miles if r.miles is not None else float("inf"))
+
+
 def find_parks(
     db: Session,
     filters: Filters,
     *,
     near: tuple[float, float] | None = None,
     radius: int | None = None,
+    sort: str = DEFAULT_SORT,
 ) -> Result:
     """Parks matching the filters. With `near` (latitude, longitude), nearest first with the
     distance in miles, optionally within `radius` miles (FR-7). The location is used for this
@@ -152,6 +199,7 @@ def find_parks(
         query = query.where(Park.designation.in_(filters.types))
     parks = list(db.scalars(query))
     summary = visit_summary(db)
+    last_visits = last_visit_dates(db)
 
     visited_count = sum(1 for p in parks if p.id in summary)
     if len(filters.types) == 1:
@@ -181,10 +229,16 @@ def find_parks(
             if radius is not None and miles > radius:
                 continue
         rows.append(
-            ParkRow(park, visited=bool(count), rating=rating or None, visits=count, miles=miles)
+            ParkRow(
+                park,
+                visited=bool(count),
+                rating=rating or None,
+                visits=count,
+                last_visit=last_visits.get(park.id),
+                miles=miles,
+            )
         )
-    if near is not None:
-        rows.sort(key=lambda row: row.miles)
+    sort_rows(rows, clean_sort(sort, near is not None))
     return Result(rows, visited_count, len(parks), label)
 
 

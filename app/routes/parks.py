@@ -9,7 +9,17 @@ from sqlalchemy.orm import Session
 from app import audit, refresh
 from app.config import get_settings
 from app.models import User
-from app.park_list import RADII, Filters, activities, designations, find_parks, map_points, states
+from app.park_list import (
+    RADII,
+    SORTS,
+    Filters,
+    activities,
+    clean_sort,
+    designations,
+    find_parks,
+    map_points,
+    states,
+)
 from app.sessions import DbSession, SignedInUser, same_origin
 from app.visits import get_park, latest_rating, park_visits
 from app.web import NO_STORE, render, templates
@@ -35,8 +45,10 @@ def show_parks(
     view: str | None,
     near: tuple[float, float] | None = None,
     radius: int | None = None,
+    sort: str | None = None,
 ) -> HTMLResponse:
-    result = find_parks(db, filters, near=near, radius=radius)
+    sort = clean_sort(sort, near is not None)
+    result = find_parks(db, filters, near=near, radius=radius, sort=sort)
     view = "map" if view == "map" else "list"
     context = {
         "filters": filters,
@@ -45,6 +57,8 @@ def show_parks(
         "points": map_points(result),
         "near": near,
         "radius": radius,
+        "sort": sort,
+        "sorts": SORTS,
     }
     # Typing in the search box swaps only the list (or the map's data), not the whole page.
     if request.headers.get("hx-target") == "results":
@@ -83,11 +97,12 @@ def parks_page(
     activity: Annotated[str | None, Query(max_length=100)] = None,
     f: Annotated[str | None, Query(max_length=1)] = None,
     view: Annotated[str | None, Query(max_length=4)] = None,
+    sort: Annotated[str | None, Query(max_length=10)] = None,
 ) -> HTMLResponse:
     filters = Filters.from_query(
         q=q, visited=visited, types=types, state=state, activity=activity, submitted=bool(f)
     )
-    return show_parks(request, db, user, filters, view)
+    return show_parks(request, db, user, filters, view, sort=sort)
 
 
 @router.post("/parks/near", response_class=HTMLResponse, dependencies=[Depends(same_origin)])
@@ -105,6 +120,7 @@ def parks_near(
     f: Annotated[str | None, Form(max_length=1)] = None,
     view: Annotated[str | None, Form(max_length=4)] = None,
     radius: Annotated[str | None, Form(max_length=4)] = None,
+    sort: Annotated[str | None, Form(max_length=10)] = None,
 ) -> HTMLResponse:
     """The list or map sorted by distance from where the person is (FR-7, FR-11).
 
@@ -115,7 +131,7 @@ def parks_near(
         q=q, visited=visited, types=types, state=state, activity=activity, submitted=bool(f)
     )
     miles = int(radius) if radius and radius.isdigit() and int(radius) in RADII else None
-    return show_parks(request, db, user, filters, view, near=(lat, lon), radius=miles)
+    return show_parks(request, db, user, filters, view, near=(lat, lon), radius=miles, sort=sort)
 
 
 @router.get("/parks/{park_code}", response_class=HTMLResponse)

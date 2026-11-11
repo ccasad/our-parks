@@ -32,6 +32,17 @@
     field("lat").value = on ? lat : "";
     field("lon").value = on ? lon : "";
     options.hidden = !on;
+    // Near me selects Distance; turning it off returns from Distance to Name A–Z (FR-21).
+    var sort = field("sort");
+    if (sort) {
+      var option = sort.tagName === "SELECT" ? sort.querySelector('option[value="distance"]') : null;
+      if (option) {
+        option.disabled = !on;
+        option.hidden = !on;
+      }
+      if (on) sort.value = "distance";
+      else if (sort.value === "distance") sort.value = "name";
+    }
     button.setAttribute("aria-pressed", on ? "true" : "false");
     var classes = {
       on: ["border-sky-600", "bg-sky-50", "text-sky-800"],
@@ -85,7 +96,8 @@
 
   // While Near me is on, filter requests go as a POST with the location in the body.
   document.addEventListener("htmx:configRequest", function (event) {
-    if (event.detail.elt !== form() || !isOn()) return;
+    var elt = event.detail.elt;
+    if ((elt !== form() && !(elt.hasAttribute && elt.hasAttribute("data-sort"))) || !isOn()) return;
     event.detail.verb = "post";
     event.detail.path = "/parks/near";
     event.detail.useUrlParams = false;

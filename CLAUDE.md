@@ -27,7 +27,7 @@ Built for Our Parks: NPS park load and daily cache, Parks tab (list, search, fil
 Not built yet: nothing from version 1. Later ideas are in REQUIREMENTS.md ("Out of scope": state parks, Stats tab, wish list).
 
 Next, in order:
-1. Add the NPS API key (`NPS_API_KEY`) in Vercel and check the map and Near me in a real browser (the build had none).
+1. Add the NPS API key (`NPS_API_KEY`) in Vercel and check the map (pine-tree markers), sort menu and Near me in a real browser (the build had none).
 
 ## Rules
 

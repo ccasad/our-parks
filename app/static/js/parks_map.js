@@ -79,9 +79,20 @@
     var button = el("button", "park-marker " + (point.visited ? "is-visited" : "is-unvisited"));
     button.type = "button";
     button.setAttribute("aria-label", point.name + (point.visited ? ", visited" : ""));
-    var m = new maplibregl.Marker({ element: button })
+    // A small pine tree like the app icon; it takes its colour from the button.
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 14 20");
+    svg.setAttribute("aria-hidden", "true");
+    var path = document.createElementNS(NS, "path");
+    path.setAttribute("d", "M7 0L3 7h8zM7 5L2 12h10zM7 9L0 17h14zM6 16h2v4H6z");
+    path.setAttribute("fill", "currentColor");
+    svg.appendChild(path);
+    button.appendChild(svg);
+    // The base of the tree sits on the park's location.
+    var m = new maplibregl.Marker({ element: button, anchor: "bottom" })
       .setLngLat([point.lon, point.lat])
-      .setPopup(new maplibregl.Popup({ offset: 16, maxWidth: "260px" }).setDOMContent(card(point)))
+      .setPopup(new maplibregl.Popup({ offset: [0, -24], maxWidth: "260px" }).setDOMContent(card(point)))
       .addTo(map);
     return m;
   }
