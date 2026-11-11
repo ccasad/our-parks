@@ -1,4 +1,4 @@
-"""Signed-in pages: Home (replace with the app's own) and More, plus the theme setting."""
+"""Signed-in pages: Parks, Visits and More, plus the theme setting."""
 
 from typing import Annotated
 
@@ -14,7 +14,12 @@ router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse, name="home")
 def home(request: Request, user: SignedInUser) -> HTMLResponse:
-    return render(request, "pages/home.html", title="Home", user=user, active="home")
+    return render(request, "pages/home.html", title="Parks", user=user, active="parks")
+
+
+@router.get("/visits", response_class=HTMLResponse, name="visits")
+def visits(request: Request, user: SignedInUser) -> HTMLResponse:
+    return render(request, "pages/visits.html", title="Visits", user=user, active="visits")
 
 
 @router.get("/more", response_class=HTMLResponse, name="more")

@@ -4,7 +4,7 @@ Context for Claude Code sessions in this repo.
 
 ## What this is
 
-CHANGE ME: two or three sentences on what the app does and for whom.
+Our Parks is a family app for browsing US National Park Service sites (a list and a MapLibre map, with search and filters) and keeping one shared family log of visits with a family star rating. Park data comes from the NPS API and is cached daily in the app's own table. Invite-only: an admin plus the family they invite.
 
 **Read REQUIREMENTS.md before starting any task.** Requirement IDs (FR-x, NFR-x) are the source of truth; reference them in commits. README.md explains how the built parts work.
 
@@ -22,10 +22,9 @@ Use the Makefile: `make up`, `make test`, `make lint`, `make format`, `make css`
 
 Built (from app-template): passkey sign-in and invites, server-side sessions, audit log, activity (last active, sign-ins) for the admin, Your data (download and delete), Dark/Light/System theme, PWA shell, phone tabs and laptop sidebar, encrypted column types.
 
-Not built yet: everything in REQUIREMENTS.md.
+Not built yet: everything in REQUIREMENTS.md except the app icon and tab shell (Parks, Visits, More).
 
-Next, in order:
-1. CHANGE ME
+Next, in order: the feature to-do list in REQUIREMENTS.md; BUILD_LOG.md says where the build is.
 
 ## Rules
 

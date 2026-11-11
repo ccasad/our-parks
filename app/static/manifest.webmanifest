@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Template App",
-  "short_name": "Template",
-  "description": "Starting point for new apps.",
+  "name": "Our Parks",
+  "short_name": "Our Parks",
+  "description": "Browse US National Park Service sites and keep a shared family log of the ones you have visited.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -1,7 +1,7 @@
 [project]
-name = "app-template"
+name = "our-parks"
 version = "0.1.0"
-description = "Starting point for new apps: passkey sign-in, invites, PWA shell"
+description = "A family app for browsing US National Park Service sites and logging visits"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
@@ -29,6 +29,7 @@ testpaths = ["tests"]
 [dependency-groups]
 dev = [
     "alembic>=1.20.1",
+    "pillow>=13.0.0",
     "pytailwindcss>=0.4.2",
     "pytest>=9.2.0",
     "ruff>=0.17.3",

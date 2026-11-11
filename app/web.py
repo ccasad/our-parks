@@ -35,7 +35,8 @@ NO_STORE = {"Cache-Control": "no-store"}
 
 # Bottom tabs on phones, sidebar on laptops. Up to five items; keep "More" last.
 NAV_ITEMS = [
-    {"key": "home", "label": "Home", "href": "/", "icon": "home"},
+    {"key": "parks", "label": "Parks", "href": "/", "icon": "tree"},
+    {"key": "visits", "label": "Visits", "href": "/visits", "icon": "calendar-check"},
     {"key": "more", "label": "More", "href": "/more", "icon": "dots"},
 ]
 
