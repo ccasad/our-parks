@@ -92,3 +92,43 @@ def test_more_links_to_your_data(client, db, member):
     sign_in(client, db, member)
 
     assert 'href="/account"' in client.get("/more").text
+
+
+def test_export_has_the_family_log(client, db, member):
+    from datetime import date
+
+    from tests.conftest import make_park, make_visit
+
+    park = make_park(db, name="Yosemite National Park")
+    make_visit(db, park, rating=5, on=date(2026, 7, 4), note="Bear!", user=member)
+    make_visit(db, park, rating=2, on=date(2025, 7, 4), user=make_user(db, email="o@example.com"))
+    sign_in(client, db, member)
+
+    data = client.get("/account/export").json()
+
+    assert data["family_members"][0]["name"] == "Sam Example"
+    mine, theirs = data["visits"]
+    assert (mine["park"], mine["date"], mine["rating"], mine["note"]) == (
+        "Yosemite National Park",
+        "2026-07-04",
+        5,
+        "Bear!",
+    )
+    assert mine["who_went"] == ["Sam Example"] and mine["added_by_you"] is True
+    assert theirs["added_by_you"] is False
+    assert "o@example.com" not in str(data)
+
+
+def test_deleting_an_account_keeps_the_shared_family_log(client, db, member):
+    from app.models import FamilyMember, Visit
+    from tests.conftest import make_park, make_visit
+
+    make_visit(db, make_park(db), user=member)
+    sign_in(client, db, member)
+
+    client.post("/account/delete", data={"confirm": "DELETE"})
+
+    db.expire_all()
+    visit = db.scalars(select(Visit)).one()
+    assert visit.created_by_id is None
+    assert count(db, FamilyMember) == 1

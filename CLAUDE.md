@@ -22,9 +22,12 @@ Use the Makefile: `make up`, `make test`, `make lint`, `make format`, `make css`
 
 Built (from app-template): passkey sign-in and invites, server-side sessions, audit log, activity (last active, sign-ins) for the admin, Your data (download and delete), Dark/Light/System theme, PWA shell, phone tabs and laptop sidebar, encrypted column types.
 
-Not built yet: everything in REQUIREMENTS.md except the app icon and tab shell (Parks, Visits, More).
+Built for Our Parks: NPS park load and daily cache, Parks tab (list, search, filters, progress), map view with the List/Map toggle, Near me, park page, visits (add, edit, delete, family rating), Visits tab, family members, More tab, own icon.
 
-Next, in order: the feature to-do list in REQUIREMENTS.md; BUILD_LOG.md says where the build is.
+Not built yet: nothing from version 1. Later ideas are in REQUIREMENTS.md ("Out of scope": state parks, Stats tab, wish list).
+
+Next, in order:
+1. Add the NPS API key (`NPS_API_KEY`) in Vercel and check the map and Near me in a real browser (the build had none).
 
 ## Rules
 

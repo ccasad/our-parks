@@ -1,8 +1,44 @@
-# app-template
+# Our Parks
 
-The starting point for new apps: a working, deployable app with everything that isn't specific to one idea. New apps are created from this template and add their own features on top.
+A family app for browsing US National Park Service sites and keeping one shared log of the parks the family has visited. Park details come from the official NPS API and are cached in the app's own table; the family adds visits with a date, who went, a 1-5 star rating and a note. Invite-only: an admin plus the people they invite, all sharing one log.
 
-The stack, patterns and conventions are documented in the `tools-used` docs; this README covers how this code works.
+Requirements are in `REQUIREMENTS.md` (IDs FR-x, NFR-x); `BUILD_LOG.md` records what was built and the decisions taken along the way.
+
+## Pages
+
+| Page | Path | What it does |
+| --- | --- | --- |
+| Parks | `/` | List (default) or map of parks. Defaults to National Parks. Progress line ("5 of 63 National Parks visited"), search by name, filters (visited, type, state, activity), Near me. A floating List / Map toggle keeps the search and filters. |
+| Park | `/parks/{code}` | Swipeable NPS photos with credits, description, activities, links to NPS.gov and Google Maps directions, the family rating and the visits, with Add visit. |
+| Add / edit visit | `/parks/{code}/visits/new`, `/visits/{id}/edit` | Date, who went (at least one), rating, optional note. Delete asks on its own page first. |
+| Visits | `/visits` | Every visit, newest first. |
+| More | `/more` | Family members, Park data (admin: refresh now), invite people (admin), Appearance, Your data. |
+| Family members | `/family` | Add, rename and remove the names offered under "who went". Someone on a visit can't be removed. |
+
+## Tables
+
+| Table | Holds |
+| --- | --- |
+| `parks` | The NPS sites cached from the API (about 430 rows, public, shared). Images stay on NPS's servers; only their URLs, captions, credits and alt text are stored. |
+| `park_refreshes` | One row: progress of the current park load, so it can span requests. |
+| `family_members` | Names for "who went". Encrypted. Not sign-in accounts. |
+| `visits` | One trip: park, date, rating, note (encrypted), who added it. |
+| `visit_members` | Who went on each visit. A family member in a visit can't be deleted (`RESTRICT`). |
+
+Visits and family members belong to the family as a whole, not to a user: every signed-in member sees and edits them, and they stay when someone deletes their account (a visit only forgets who added it). "Your data" downloads the whole family log.
+
+## How it works
+
+- **Loading parks** (`app/nps.py`, `app/refresh.py`): pages of 50 from the NPS API, as many as fit in a 40 second budget per request, with progress in `park_refreshes`. The Parks page starts the load by itself on the first visit of each UTC day (or when nothing is stored), and keeps asking for the next step while it runs. The admin can restart it from More. The API key is sent in a header, and the `NPS_API_KEY` variable is the only place it lives. A failed attempt isn't retried on its own for an hour. Parks missing from a finished load are deleted, unless the family has a visit there. Only https links on nps.gov are kept for photos and the park page.
+- **List and search** (`app/park_list.py`): filtering is done in Python over the stored copy (a few hundred rows). The filters are in the URL (`q`, `visited`, `type`, `state`, `activity`, `view`); `f=1` marks the form as used, so that "no type ticked" means every type while the default is National Park. Typing swaps only the list (`HX-Target: results`).
+- **Map** (`app/static/js/parks_map.js`): MapLibre GL 5 (vendored in `app/static/vendor/`) with the OpenFreeMap style from `MAP_STYLE_URL`, loaded only when a map is on the page. One button marker per park, green when visited and grey when not; tapping opens a card. The credits are shown under the map as well as in the map's own attribution.
+- **Near me** (`app/static/js/near_me.js`, `POST /parks/near`): the browser's location goes in the request body only. The server uses it to sort by distance (haversine, miles) and optionally limit to 100, 250 or 500 miles, and never stores or logs it. While it is on, filter changes and the List / Map toggle are posts rather than links, so the location never reaches a URL. `Permissions-Policy` in `vercel.json` allows geolocation for this site.
+- **Family rating**: the rating of a park's latest visit by date.
+- **App icon**: `scripts/make_icons.py` draws the pine tree and writes every icon from one master.
+
+## Template foundations
+
+Everything below came with the app template.
 
 ## What's included
 
@@ -47,7 +83,7 @@ make up                  # http://localhost:8000
 
 ## Deploying (Vercel + Neon)
 
-Vercel deploys `main`; there's no build step. Set these in Vercel (Production): `APP_BASE_URL`, `APP_NAME`, `DATABASE_URL` (Neon pooled URL), `TOKEN_ENCRYPTION_KEY`, `ADMIN_EMAIL`, `WEBAUTHN_RP_ID` (the domain, no scheme). Apply migrations to production **before** deploying code that needs them; they never run on deploy. Then create the first admin invite with `python -m app.cli invite --admin` against the production database.
+Vercel deploys `main`; there's no build step. Set these in Vercel (Production): `APP_BASE_URL`, `APP_NAME`, `DATABASE_URL` (Neon pooled URL), `TOKEN_ENCRYPTION_KEY`, `ADMIN_EMAIL`, `WEBAUTHN_RP_ID` (the domain, no scheme), `NPS_API_KEY` (free, from nps.gov/subjects/developer; parks can't load without it). Apply migrations to production **before** deploying code that needs them; they never run on deploy. Then create the first admin invite with `python -m app.cli invite --admin` against the production database.
 
 ## Secrets
 
@@ -56,5 +92,6 @@ Never in this repo. Where each one lives:
 | Variable | Where it lives | Can it be regenerated? |
 | --- | --- | --- |
 | `TOKEN_ENCRYPTION_KEY` | Vercel env var + 1Password ("<app> keys", App Keys vault) | **No.** A new key can't read existing data. |
+| `NPS_API_KEY` | Vercel env var; nps.gov developer site | Yes (request a new key) |
 | `DATABASE_URL` | Vercel env var; Neon console → Connect | Yes (reset the password in Neon) |
 | `APP_BASE_URL`, `APP_NAME`, `ADMIN_EMAIL`, `WEBAUTHN_RP_ID` | Vercel env vars | Not secrets |

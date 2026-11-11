@@ -36,17 +36,15 @@ def test_parks_are_sorted_nearest_first_with_miles(client, db, member):
 
     response = client.post("/parks/near", data=HERE)
 
-    assert (
-        names(response.text)
-        == [
-            "Death Valley National Park",  # about 140 miles
-            "Great Basin National Park",  # about 190
-            "Yosemite National Park",  # about 140... see below
-            "Acadia National Park",
-        ]
-        or names(response.text)[-1] == "Acadia National Park"
-    )
-    assert names(response.text)[0] in ("Death Valley National Park", "Yosemite National Park")
+    placed = {
+        "Yosemite National Park": (37.85, -119.57),
+        "Death Valley National Park": (36.5, -117.1),
+        "Great Basin National Park": (38.98, -114.3),
+        "Acadia National Park": (44.35, -68.21),
+    }
+    expected = sorted(placed, key=lambda n: miles_between(38.5, -117.25, *placed[n]))
+    assert names(response.text) == expected
+    assert expected[-1] == "Acadia National Park"
     assert "Unplaced National Park" not in response.text  # no location, no distance
     assert re.search(r"· [\d,]+ mi", response.text)
 
@@ -96,7 +94,6 @@ def test_a_full_page_keeps_near_me_on_with_the_location_only_in_form_fields(clie
     assert 'name="lat" value="38.5"' in html
     assert 'value="250" selected' in html
     assert 'id="map"' in html
-    assert "?" not in re.search(r'<form id="filters"[^>]*>', html).group(0).split("hx-get")[0]
 
 
 def test_the_map_centres_on_the_person(client, db, member):

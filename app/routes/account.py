@@ -11,8 +11,9 @@ from sqlalchemy.orm import Session
 
 from app import audit
 from app.config import get_settings
-from app.models import User
+from app.models import FamilyMember, User, Visit
 from app.sessions import SESSION_COOKIE, DbSession, SignedInUser, same_origin
+from app.visits import all_visits
 from app.web import render
 
 router = APIRouter()
@@ -29,9 +30,10 @@ def iso(moment: datetime | None) -> str | None:
 def export_data(db: Session, user: User) -> dict[str, Any]:
     """Everything stored for this user, without secrets (no tokens, no passkey keys).
 
-    When the app adds tables that belong to a user, add them here, so the download
-    really is everything.
+    Visits and family members belong to the whole family, not to one person, so all of
+    them are included, and they stay when someone deletes their account.
     """
+    visits = all_visits(db)
     return {
         "exported_at": datetime.now(UTC).isoformat(),
         "app": get_settings().app_name,
@@ -44,6 +46,26 @@ def export_data(db: Session, user: User) -> dict[str, Any]:
             "last_active_at": iso(user.last_active_at),
             "passkeys": len(user.passkeys),
         },
+        # The family log is shared by every member, so the download holds all of it.
+        "family_members": [
+            {"id": str(m.id), "name": m.name}
+            for m in sorted(db.scalars(select(FamilyMember)), key=lambda m: m.name.casefold())
+        ],
+        "visits": [visit_export(visit, user) for visit in visits],
+    }
+
+
+def visit_export(visit: Visit, user: User) -> dict[str, Any]:
+    return {
+        "id": str(visit.id),
+        "park_code": visit.park.park_code,
+        "park": visit.park.name,
+        "date": visit.visit_date.isoformat(),
+        "who_went": sorted(m.name for m in visit.members),
+        "rating": visit.rating,
+        "note": visit.note,
+        "added_by_you": visit.created_by_id == user.id,
+        "created_at": iso(visit.created_at),
     }
 
 
@@ -96,8 +118,8 @@ def delete_account(
         return RedirectResponse("/account?notice=only-admin", status_code=303)
     # The audit trail keeps the event without saying who it was.
     audit.record(db, "account_deleted")
-    # Cascades to passkeys, sessions and everything else the user owns
-    # (give new tables ForeignKey("users.id", ondelete="CASCADE")).
+    # Cascades to passkeys and sessions. The family log (visits, family members) is shared,
+    # so it stays; visits only forget who added them (created_by_id is set to NULL).
     db.delete(user)
     db.commit()
     response = RedirectResponse("/login?notice=deleted", status_code=303)
